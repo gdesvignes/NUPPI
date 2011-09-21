@@ -1,0 +1,31 @@
+<BON_config>    
+    <t_dump>5.0</t_dump><!-- dump time in sec -->
+    <scanlen>3000.0</scanlen><!-- requested scan len in sec -->
+    <cal_scan>0</cal_scan>
+    <obsfreq>1298</obsfreq> <!-- [MHz] Centre frequency for observation -->
+    <obsbw>512</obsbw> <!-- [MHz] Bandwidth for observation -->
+    <totnchan>128</totnchan> <!-- Total number of frequency channels (original) -->
+    <equinox>2000.0</equinox><!-- Equinox of coords (e.g. 2000.0) -->
+    <fd_poln>LIN</fd_poln><!--pol_mode>LIN</pol_mode--><!-- LIN or CIRC -->
+    <front_end>LBand</front_end>
+    <obs_mode>PSR</obs_mode><!-- PSR, CAL, SEARCH -->
+    <ra_str>22:40:42.959366</ra_str>
+    <dec_str>58:32:37.49343</dec_str>
+    <n_ds>4</n_ds><!-- Number of data servers used -->
+    <n_gpu>2</n_gpu><!-- Number of GPUs per DS -->
+    <band_dir>1</band_dir>
+    <n_bins>2048</n_bins>
+    <nb_psr>1</nb_psr>
+    <psr_name_0>1946+2611</psr_name_0><!-- pulsar name -->
+    <chan_dm_0>264</chan_dm_0><!-- Dispersion Measure -->
+    <psr_name_1>PSR2</psr_name_1><!-- pulsar name -->
+    <chan_dm_1>42.2</chan_dm_1><!-- Dispersion Measure -->
+    <single_pulse>False</single_pulse><!-- Record SinglePulse, True or False-->
+    <scan>00000</scan><!-- TO UPDATE -->
+    <observer>GD/IC</observer>
+    <proj_id>PSR</proj_id>
+    <telescope>NC</telescope>
+    <!--nb_schan>16</nb_schan--><!-- DEPRECATED -->
+    <t_resol>32</t_resol>
+    <n_bits>4</n_bits>
+</BON_config>    
