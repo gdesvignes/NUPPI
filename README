@@ -1,27 +1,26 @@
-XXX - Pulsar data aquisition software, mainly from GUPPI by P.Demorest, S.Ransom et al. 
+NUPPI - Pulsar data aquisition software at Nancay, the code being adapted from GUPPI by P.Demorest, S.Ransom et al. 
+
+Gregory Desvignes
+October 3rd, 2011
 
 
 Requirements :
+--------------
+
  1) To program the FPGA, it needs the Python KATCP library
     along with the katcp_wrapper distributed in the corr package
 
- 2) Need dev-python/elementtree, dev-python/shm, sci-libs/fftw for gentoo systems
+ 2) Need dev-python/elementtree, dev-python/shm, sci-libs/fftw, sci-libs/cfitsio, dev-python/pyfits, dev-python/numpy for gentoo systems
 
- 3) aipy, tempo
+ 3) Install pyslalib, tempo (the new version from sourceforge!), cuda
 
-Compiling : 
+ 4) Install and configure ntpd
 
-  python setup.py install
 
-Make sure that the DAQ environment variable has been set to point the package directory
-On Gentoo :
-  vi /etc/env.d/99nuppi
-  add : NUPPI = "(directory)"
-  env-update && source /etc/profile
-  
+Setup :
+-------
 
-  
-Added to sysctl.conf
+Add in sysctl.conf
 
 kernel.shmmax = 3000000000 
 net.core.wmem_max = 67108864 
@@ -34,3 +33,20 @@ net.ipv4.tcp_wmem = 4096 87380 67108864
 net.core.netdev_max_backlog = 250000
 net.ipv4.tcp_tw_recycle = 1
 net.ipv4.tcp_fin_timeout = 10
+
+Make sure that the DAQ environment variable has been set to point the package directory
+On Gentoo :
+  vi /etc/env.d/99nuppi
+  add : NUPPI = "(directory)"
+  env-update && source /etc/profile
+  
+To activate the FORWARD option (copy the raw data to an other IP address) in net_tread.c, please edit :
+  src/Makefile
+
+
+Compiling : 
+-----------
+
+  python setup.py install
+
+
