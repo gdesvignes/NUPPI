@@ -63,6 +63,10 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	log.info('Set NRT default params')
 	set_nrt_params(b, gpu_id)
 
+    # If host is ripata, change the port number (data are forwarded)
+    if socket.gethostname() in ['ripata']:
+	b.update("DATAPORT", 6010 + gpu_id)
+
     # Update AZ/ZA
     b.update_azza()
 

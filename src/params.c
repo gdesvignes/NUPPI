@@ -167,6 +167,13 @@ int read_net_params(char *buf, udp_params *u) {
     return(OK);
 }
 
+// Read networking parameters
+int read_fwd_params(char *buf, udp_params *u) {
+    get_str(buf,"RAWHOST", u->sender, 80);
+    get_int(buf,"DATAPORT", &u->port, 6000);
+    return(OK);
+}
+
 /* Some code just needs a simple way to get the obs mode string */
 void read_obs_mode(char *buf, char *mode) {
     get_str(buf,"OBS_MODE", mode, 8);

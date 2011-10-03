@@ -1,5 +1,6 @@
 CUDA = /opt/cuda
-CFLAGS =  -O3 -mtune=native -march=native -funroll-loops -Wall -I$(CUDA)/include -I/usr/include/libcfitsio0
+FORWARD = -DHAVE_FORWARD
+CFLAGS = $(FORWARD) -O3 -mtune=native -march=native -funroll-loops -Wall -I$(CUDA)/include -I/usr/include/libcfitsio0
 NVCCFLAGS = -arch sm_13 -I$(CUDA)/include -I/usr/include/libcfitsio0
 INSTALL_DIR = ../bin
 

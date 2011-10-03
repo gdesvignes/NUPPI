@@ -238,6 +238,16 @@ void *net_thread(void *_args) {
   }    
   log_info("net_thread","read_net_params completed");
 
+#if HAVE_FORWARD
+  udp_params socket_fwd;
+  uint64_t nbogus_forward_total;
+  // -- Read network params from status
+  rv = read_fwd_params(status_buf, &socket_fwd);
+  if(rv!=OK) {
+      log_error("net_thread","Error in read_fwd_params");
+      pthread_exit(NULL);
+  }    
+#endif
 
   // -- Init struct packet --
   // Figure out size of data in each packet, number of packets per block, etc.
@@ -268,6 +278,18 @@ void *net_thread(void *_args) {
       log_info("net_thread","init socket successfully");
   }
   pthread_cleanup_push((void *)udp_close, &socket);
+
+#if HAVE_FORWARD
+  // -- Set up socket --
+  rv = udp_forward_init(&socket_fwd);
+  if(rv!=OK) {
+      log_error("net_thread","error setting UDP forward connection");
+      pthread_exit(NULL);
+  } else {
+      log_info("net_thread","init socket forward successfully");
+  }
+  pthread_cleanup_push((void *)udp_close, &socket_fwd);
+#endif
 
   // -- Set useful values --
   int nchan=0, npol=0;
@@ -368,6 +390,21 @@ void *net_thread(void *_args) {
 	      pthread_exit(NULL);
           }
       }
+
+#if HAVE_FORWARD	
+      rv = udp_forward(&socket_fwd, &packet);
+      if(rv != OK) {
+          if (rv==ERR_PACKET) {
+	      /* Unexpected packet size, ignore? */
+	      nbogus_forward_total++;
+	      continue;
+          } else {
+              log_error("net_thread","Error within udp_forward");
+	      pthread_exit(NULL);
+          }
+      }
+#endif
+
       //clock_gettime(CLOCK_REALTIME, &t_udprcv2);
       //t_udprcv += (double)timediff(t_udprcv1, t_udprcv2); 
 
@@ -572,6 +609,9 @@ void *net_thread(void *_args) {
   pthread_cleanup_pop(0); /* Closes free_psrfits */
   pthread_cleanup_pop(0); /* Closes status_detach */
   pthread_cleanup_pop(0); /* Closes databuf_detach */
+#if HAVE_FORWARD
+  pthread_cleanup_pop(0); /* Closes push(udp_close) forward */
+#endif
 
 }
 

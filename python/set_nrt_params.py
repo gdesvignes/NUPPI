@@ -36,6 +36,7 @@ def set_nrt_params(b, gpu_id):
     # ROACH infos
     b.update("DATADIR", "/data/")
     b.update("DATAHOST", "roach")
+    b.update("RAWHOST", "ripata-10gbe")
     if gpu_id == 0:
         b.update("DATAPORT", "6000")
     elif gpu_id == 1:

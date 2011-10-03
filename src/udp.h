@@ -27,6 +27,7 @@ typedef struct {
     int sock;                       /* Receive socket */
     struct addrinfo sender_addr;    /* Sender hostname/IP params */
     struct pollfd pfd;              /* Use to poll (wait) for avail data */
+    struct sockaddr_in host;
 } udp_params;
 
 typedef struct {
@@ -50,16 +51,21 @@ size_t udp_packet_datasize(size_t packet_size);
 size_t parkes_udp_packet_datasize(size_t packet_size);
 unsigned long long guppi_udp_packet_flags(const struct guppi_udp_packet *p);
 */
+struct in_addr *udp_atoaddr(char *address);
 /* Use sender and port fields in param struct to init
  * the other values, bind socket, etc.
  */
 int udp_init(udp_params *params);
+int udp_forward_init(udp_params *params);
 
 /* Wait for available data on the UDP socket */
 int udp_wait(udp_params *params); 
 
 /* Read a packet */
 int udp_recv(udp_params *params, udp_packet *packet);
+
+/* Forward a packet to another IP*/
+int udp_forward(udp_params *params, udp_packet *packet);
 
 /* Read the polarization of the packet */
 int udp_packet_polar(const udp_packet *packet);

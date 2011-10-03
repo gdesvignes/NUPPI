@@ -14,6 +14,9 @@
 #include <poll.h>
 #include <byteswap.h>
 #include <inttypes.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "udp.h"
 #include "databuf.h"
@@ -85,6 +88,60 @@ int udp_init(udp_params *p) {
     return(OK);
 }
 
+int udp_forward_init(udp_params *p) {
+    char strlog[128];
+
+    /* Set up socket */
+    p->sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (p->sock==-1) { 
+        log_error("udp_init_forward", "socket error");
+        return(ERR_SYS);
+    }
+
+    /* ensure the socket is reuseable without the painful timeout */
+    int on = 1;
+    if (setsockopt(p->sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != 0) {
+	sprintf(strlog, "setsockopt(SO_REUSEADDR) failed : %s", strerror(errno));
+	log_error("udp_init_forward", strlog);
+	return(ERR_SYS);
+    }	
+
+    /* bind to local address */
+    struct sockaddr_in local_ip, dest_ip;
+    local_ip.sin_family = AF_INET;
+    local_ip.sin_port = htons(p->port+10);;
+
+    dest_ip.sin_family = AF_INET;
+    dest_ip.sin_port = htons(p->port+10);  // TODO
+
+    /* Direct packets to one host */
+    struct in_addr *addr;
+    addr = udp_atoaddr(p->sender);
+    if (!addr) {
+	sprintf(strlog, "failed atoaddr(%s)", p->sender);
+	log_error("udp_init_forward", strlog);
+	return(ERR_SYS);
+    }
+    local_ip.sin_addr.s_addr = addr->s_addr;
+    bzero(&(local_ip.sin_zero), 8);
+
+    //addr = udp_atoaddr("192.168.3.12");
+    //dest_ip.sin_addr.s_addr = addr->s_addr;
+
+    p->host = local_ip;
+    p->sender_addr.ai_addrlen = sizeof(struct sockaddr);
+
+/*
+    int rv = bind(p->sock, (struct sockaddr *)&local_ip, sizeof(local_ip));
+    if (rv==-1) {
+        sprintf(strlog, "bind : %s", strerror(errno));
+	log_error("udp_init", strlog);
+	return(ERR_SYS);
+    }
+*/
+    return(OK);
+}
+
 int udp_wait(udp_params *p) {
     int rv = poll(&p->pfd, 1, 1000); /* Timeout 1sec */
     if (rv==1) { return(OK); } /* Data ready */
@@ -106,6 +163,34 @@ int udp_recv(udp_params *p, udp_packet *b) {
 }
 
 
+int udp_forward(udp_params *p, udp_packet *b) {
+    //int rv = send(p->sock, b->data, b->packet_size, 0);
+    int rv = sendto(p->sock, b->data, b->packet_size, 0, (struct sockaddr *)&p->host, sizeof(p->host));
+    //if (rv==-1) { return(ERR_SYS); }
+    if (rv==-1) { fprintf(stderr, "%d %d %s\n", p->host.sin_port, errno, strerror(errno));return(ERR_SYS); }
+    else if (rv != b->packet_size) {
+	return(ERR_PACKET); 
+    } else { 
+        return(OK); 
+    }
+}
+
+struct in_addr *udp_atoaddr(char *address) {
+    struct hostent *host;
+    static struct in_addr saddr;
+
+    /* First try it as aaa.bbb.ccc.ddd. */
+    saddr.s_addr = inet_addr(address);
+    if ((int) saddr.s_addr != -1) {
+	return &saddr;
+    }
+    host = gethostbyname(address);
+    if (host != NULL) {
+	return (struct in_addr *) *host->h_addr_list;
+    }
+    return NULL;
+}
+
 
 // -- Return the fpga counter --
 uint64_t udp_packet_seq_num(const udp_packet *p) {
@@ -123,7 +208,7 @@ uint64_t udp_packet_seq_num(const udp_packet *p) {
         return(*(uint64_t *) ((char *)(p->data) + 5*sizeof(uint32_t)));
     }	    
 
-    else return(*(uint64_t *)(p->data) / udp_packet_datasize(p->packet_size));	
+    else return(*(uint64_t *)((char *)(p->data) ) );
 }
 
 // -- Return the packet IP id --

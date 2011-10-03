@@ -41,6 +41,7 @@ typedef struct {
 
 void read_obs_mode(char *buf, char *mode);
 int read_net_params(char *buf, udp_params *u);
+int read_fwd_params(char *buf, udp_params *u);
 int read_status_params(char *buf, obs_params *g, struct psrfits *p);
 void read_subint_params(char *buf, obs_params *g, struct psrfits *p);
 void free_psrfits(struct psrfits *p);
