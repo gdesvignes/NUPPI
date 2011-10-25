@@ -269,7 +269,7 @@ void init_dedispersion(dedispersion_setup *s) {
     for (i=0; i<s->nchan; i++) s->chirp_gpu[i] = s->chirp_gpu[0] + i*s->fft_len;
 
     //printf("allocated mem\n"); fflush(stdout);
-    printf("total_gpu_mem = %d MB\n", total_gpu_mem >> 20);
+    printf("total_gpu_mem = %d MB\n", (int)(total_gpu_mem >> 20));
 
     cudaThreadSynchronize();
     //printf("init_dedispersion2 cuda_err=\'%s\'\n", cudaGetErrorString(cudaGetLastError()));
@@ -310,8 +310,6 @@ void dedisperse(dedispersion_setup *s, int ichan,
         const unsigned char *in, float *out) {
 
 
-    cufftResult fft_rv;
-
     /* Various sizes */
     const size_t bytes_per_sample = 4; // 8-bit complex 2-pol
     const size_t bytes_in = bytes_per_sample * s->npts_per_block;
@@ -345,9 +343,8 @@ void dedisperse(dedispersion_setup *s, int ichan,
     cudaEventRecord(t[it], 0); it++;
 
     /* Forward FFT */
-    fft_rv = cufftExecC2C(s->plan, s->databuf0_gpu, s->databuf0_gpu, CUFFT_FORWARD);
+    cufftExecC2C(s->plan, s->databuf0_gpu, s->databuf0_gpu, CUFFT_FORWARD);
     cudaEventRecord(t[it], 0); it++;
-    //printf("fft1 = %d\n", fft_rv);
 
     /* Multiply by chirp */
     dim3 gd(2*s->nfft_per_block, s->fft_len/4096, 1);
@@ -357,9 +354,8 @@ void dedisperse(dedispersion_setup *s, int ichan,
     cudaEventRecord(t[it], 0); it++;
 
     /* Inverse FFT */
-    fft_rv = cufftExecC2C(s->plan, s->databuf0_gpu, s->databuf0_gpu, CUFFT_INVERSE);
+    cufftExecC2C(s->plan, s->databuf0_gpu, s->databuf0_gpu, CUFFT_INVERSE);
     cudaEventRecord(t[it], 0); it++;
-    //printf("fft2 = %d\n", fft_rv);
 
 #define DETECT_AND_TRANSFER 0
 #if DETECT_AND_TRANSFER
@@ -438,7 +434,7 @@ void unpack(dedispersion_setup *s, int ichan,
         const unsigned char *in, float *out) {
 
 
-    cufftResult fft_rv;
+    //cufftResult fft_rv;
 
     /* Various sizes */
     const size_t bytes_per_sample = 4; // 8-bit complex 2-pol

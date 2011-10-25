@@ -316,11 +316,13 @@ int main(int argc, char *argv[]) {
 
     pthread_mutex_destroy(&lock_psrfits_tpl);
 
-    char cmd[128], hostname[128];
+    char filename[128], hostname[128];
     gethostname(hostname, 127);
-    sprintf(cmd, "mv %s /home/pulsar/data/%s-%s.log", LOG_FILENAME, basename, hostname);
-    log_info("nuppi_daq_dedisp", cmd);
-    system(cmd);
+    sprintf(filename, "/home/pulsar/data/%s-%s.log", basename, hostname);
+    rename(LOG_FILENAME, filename);
+    char strlog[128];
+    sprintf(strlog, "Moving log file to %s", filename);
+    log_info("nuppi_daq_ds", strlog);
 
     exit(0);
 }

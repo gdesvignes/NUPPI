@@ -109,6 +109,7 @@ void rawdisk_thread(void *_args) {
     int curblock=0;
     int block_count=0, blocks_per_file=128, filenum=0;
     int got_packet_0=0, first=1;
+    size_t written;
     char *ptr, *hend;
 
     double t_write = 0.0;
@@ -197,7 +198,7 @@ void rawdisk_thread(void *_args) {
 	    ts.hdlen = gethlength (ptr);
 	    clock_gettime(CLOCK_REALTIME, &t_write_start);
             for (ptr=ptr; ptr<=hend; ptr+=80) {
-                fwrite(ptr, 80, 1, fraw);
+                written = fwrite(ptr, 80, 1, fraw);
             }
 	    clock_gettime(CLOCK_REALTIME, &t_write_stop);
 	    t_write += (double)timediff(t_write_start, t_write_stop);

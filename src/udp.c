@@ -113,7 +113,7 @@ uint64_t udp_packet_seq_num(const udp_packet *p) {
      *  8 bytes for PASP, increment by number of samples in the packet !
      */
     if(p->packet_size==PACKET_SIZE_PASP)
-	return(bswap_64(*(uint64_t *)(p->data)) / udp_packet_datasize(p->packet_size) );
+	return(bswap_64(*(uint64_t *)(p->data)) /(uint64_t) udp_packet_datasize(p->packet_size) );
 
     /*
      *  4 bytes for SonATA, increment by packet, positionned at +20bytes (see Billy's memo)
@@ -123,12 +123,13 @@ uint64_t udp_packet_seq_num(const udp_packet *p) {
         return(*(uint64_t *) ((char *)(p->data) + 5*sizeof(uint32_t)));
     }	    
 
-    else return(*(uint64_t *)(p->data) / udp_packet_datasize(p->packet_size));	
+    else return(*(uint64_t *)(char *)(p->data) /(uint64_t) udp_packet_datasize(p->packet_size));	
 }
 
 // -- Return the packet IP id --
 uint64_t udp_packet_IP_id(const udp_packet *p) {
-   if(p->packet_size==PACKET_SIZE_PASP) return(bswap_64(*(uint64_t *)(p->data + sizeof(uint64_t))) );
+    if(p->packet_size==PACKET_SIZE_PASP) return(bswap_64(*(uint64_t *)(p->data + sizeof(uint64_t))) );
+    else return(0);	
 }
 
 // -- Return the packet polar number --

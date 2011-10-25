@@ -63,13 +63,13 @@ void split_path_file(char *input, char **path, char **file)
 /* path and filename dynamically, the calling program  */
 /* must free both "path" and "file".                   */
 {
-    char *sptr = NULL, stmp[200];
+    char *ptr=NULL, *sptr = NULL, stmp[200];
     unsigned int len, pathlen = 0, filelen = 0;
     
     len = strlen(input);
     sptr = strrchr(input, '/');
     if (sptr == NULL) {
-        getcwd(stmp, 200);
+        ptr = getcwd(stmp, 200);
         if (stmp == NULL) {
             printf("\nCurrent directory name is too long.\n");
             printf("Exiting\n\n");

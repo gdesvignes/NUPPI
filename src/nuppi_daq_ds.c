@@ -300,10 +300,13 @@ int main(int argc, char *argv[]) {
     thread_args_destroy(&ds_args_2);
     thread_args_destroy(&disk_args_2);
 
-    char cmd[128];
-    sprintf(cmd, "mv %s /home/pulsar/data/%s.log", LOG_FILENAME, basename);
-    log_info("nuppi_daq_ds", cmd);
-    system(cmd);
+    char hostname[128], filename[128];
+    gethostname(hostname, 127);
+    sprintf(filename, "/home/pulsar/data/%s-%s.log", basename, hostname);
+    rename(LOG_FILENAME, filename);
+    char strlog[128];
+    sprintf(strlog, "Moving log file to %s", filename);
+    log_info("nuppi_daq_ds", strlog);
 
     exit(0);
 }

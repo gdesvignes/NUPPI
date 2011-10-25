@@ -317,6 +317,7 @@ void *net_thread(void *_args) {
   const double drop_lpf = 0.25;
 
   // -- Timers var --
+  /*
   double t_total = 0.0;
   double t_cpytr = 0.0;
   double t_cpyfct = 0.0;
@@ -324,6 +325,7 @@ void *net_thread(void *_args) {
   double t_udprcv = 0.0;
   double t_counter = 0.0;
   double t_udpwait = 0.0;
+  */
   //struct timespec t_tot1, t_tot2, t_cpytr1, t_cpytr2,  t_cpyfct1, t_cpyfct2,  t_nextblock1, t_nextblock2;
   //struct timespec t_udprcv1, t_udprcv2, t_counter1, t_counter2, t_udpwait1, t_udpwait2;
 
