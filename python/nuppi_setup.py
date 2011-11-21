@@ -139,11 +139,14 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 
     # Params for search Mode
     if b['OBS_MODE']=='SEARCH':
-
+  
 	# First read the DM options from command line, if not try to read a parfile
         if opt.no_dm:
 	    b.update("DM", 0.001)
+	    # For standard suvey mode, use only 4 bits psrfits
+	    b.update("NBITS", 4)
 	else:
+	    b.update("NBITS", 8)
 	    b.update("PARFILE","%s/%s.par"%(PAR_DIRECTORY,b['SRC_NAME']))
 	    try:
 		b.update("DM", dm_from_parfile(b['PARFILE']))

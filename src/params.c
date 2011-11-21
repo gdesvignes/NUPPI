@@ -217,7 +217,7 @@ void read_subint_params(char *buf, obs_params *g, struct psrfits *p) {
         get_dbl(buf,"OFFS_SUB", &p->sub.offs, 0.0); 
         get_int(buf,"NPOLYCO", &p->fold.n_polyco_sets, 0);
     } else {
-        int bytes_per_dt = p->hdr.nchan * p->hdr.npol * p->hdr.nbits / 8;
+        int bytes_per_dt = p->hdr.nchan * p->hdr.npol * g->n_bits_adc / 8;
         p->sub.offs = p->hdr.dt * (double)(g->packetindex * g->packetsize / bytes_per_dt) + 0.5 * p->sub.tsubint;
         p->fold.n_polyco_sets = 0;
     }
@@ -271,6 +271,7 @@ int read_status_params(char *buf, obs_params *g, struct psrfits *p) {
     if (p->hdr.df==0.0) p->hdr.df = p->hdr.BW/p->hdr.nchan;
     get_dbl(buf,"SCANLEN", &p->hdr.scanlen, 0.0);
     get_int(buf,"NRCVR", &p->hdr.rcvr_polns, 2);
+    get_int(buf,"NBITSADC", &g->n_bits_adc, 8);
     p->hdr.orig_df = p->hdr.df;
     p->hdr.orig_df =p->hdr.BW/p->hdr.orig_nchan;
     p->hdr.orig_nchan = p->hdr.nchan;
@@ -371,7 +372,7 @@ int read_status_params(char *buf, obs_params *g, struct psrfits *p) {
     
     {
         int ii, jj, kk;
-        int bytes_per_dt = p->hdr.nchan * p->hdr.npol * p->hdr.nbits / 8;
+        int bytes_per_dt = p->hdr.nchan * p->hdr.npol * g->n_bits_adc / 8;
         char key[10];
         double offset, scale, dtmp;
         long long max_bytes_per_file;
@@ -380,7 +381,8 @@ int read_status_params(char *buf, obs_params *g, struct psrfits *p) {
         p->hdr.nsblk = p->sub.bytes_per_subint / bytes_per_dt;
         p->sub.FITS_typecode = TBYTE;
         p->sub.tsubint = p->hdr.nsblk * p->hdr.dt;
-	//printf("GD > bytes_per_subint=%d bytes_per_dt=%d nchan=%d npol=%d nbits=%d dt=%e nsblk = %d\n",p->sub.bytes_per_subint, bytes_per_dt, p->hdr.nchan, p->hdr.npol, p->hdr.nbits, p->hdr.dt, p->hdr.nsblk);
+	printf("GD > bytes_per_subint=%d bytes_per_dt=%d nchan=%d npol=%d nbits=%d dt=%e nsblk = %d\n",p->sub.bytes_per_subint, bytes_per_dt, p->hdr.nchan, p->hdr.npol, p->hdr.nbits, p->hdr.dt, p->hdr.nsblk);
+	fflush(stdout);
         if (fold) { 
             //p->hdr.nsblk = 1;
             p->sub.FITS_typecode = TFLOAT;

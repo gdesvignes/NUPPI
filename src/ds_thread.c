@@ -161,6 +161,7 @@ void ds_thread(void *_args) {
             /* Downsample params */
             ds.dsfac = pf.hdr.ds_time_fact;
             ds.npol = pf.hdr.onlyI ? 1 : 4;
+	    ds.nbits = pf.hdr.nbits;
 
             /* Set up freqs */
             int i;
@@ -240,13 +241,33 @@ void ds_thread(void *_args) {
             //    (pf.hdr.nsblk-pf.dedisp.overlap)/ds.dsfac;
             const unsigned npts_block = pf.hdr.nsblk / ds.dsfac;
             unsigned isamp;
-            for (isamp=0; isamp<npts_block; isamp++) {
-                unsigned ipol;
-                for (ipol=0; ipol<ds.npol; ipol++) {
-                    curdata_out[isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan] 
-                        = dsbuf[ds.npol*isamp+ipol];
-                }
-            }
+	    if (ds.nbits==8) {
+		for (isamp=0; isamp<npts_block; isamp++) {
+		    unsigned ipol;
+		    for (ipol=0; ipol<ds.npol; ipol++) {
+			curdata_out[isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan] 
+			    = dsbuf[ds.npol*isamp+ipol];
+		    }
+		}
+	    }	
+	    if (ds.nbits==4) {
+		for (isamp=0; isamp<npts_block/2; isamp++) {
+		    unsigned ipol;
+		    for (ipol=0; ipol<ds.npol; ipol++) {
+			//curdata_out = (char *)databuf_data(db_out, curblock_out)
+			//	+ isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan;
+			curdata_out[isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan] = dsbuf[ds.npol*isamp+ipol];
+			//*curdata_out  = * (&dsbuf[ds.npol*(2*isamp)+ipol]) << 4;
+			//*curdata_out += * (&dsbuf[ds.npol*(2*isamp+1)+ipol]);	
+			//printf("%d %d\n", (int) dsbuf[ds.npol*(2*isamp)+ipol], (int) dsbuf[ds.npol*(2*isamp+1)+ipol]);
+		        
+			//curdata_out[isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan] = dsbuf[ds.npol*(2*isamp)+ipol] << 4;
+			//curdata_out[isamp*ds.nchan*ds.npol + ipol*ds.nchan + ichan] += dsbuf[ds.npol*(2*isamp+1)+ipol];
+		    }
+		    //printf("%d > %d %d\n", isamp, (int) dsbuf[ds.npol*(2*isamp)], (int) dsbuf[ds.npol*(2*isamp+1)]);
+		}
+		//exit(0);
+	    }	
 
         }
 
@@ -261,6 +282,7 @@ void ds_thread(void *_args) {
         hputi4(hdr_out, "NPKT", npacket);
         hputi4(hdr_out, "NDROP", ndrop);
         hputi4(hdr_out, "NBLOCK", nblock_int);
+	hputr8(hdr_out, "TSUBINT", tsubint);
         nblock_int=0;
         npacket=0;
         ndrop=0;

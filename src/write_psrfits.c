@@ -311,7 +311,7 @@ int psrfits_write_subint(struct psrfits *pf) {
     sub = &(pf->sub);        // dereference the ptr to the subint struct
     status = &(pf->status);  // dereference the ptr to the CFITSIO status
 
-    //printf("hdr->nchan = %d, hdr->ds_freq_fact = %d, hdr->onlyI = %d \n", hdr->nchan, hdr->ds_freq_fact, hdr->onlyI);fflush(stdout);
+    //printf("hdr->nchan = %d, hdr->ds_freq_fact = %d, hdr->onlyI = %d, hdr->nbits =%d \n", hdr->nchan, hdr->ds_freq_fact, hdr->onlyI, hdr->nbits);fflush(stdout);
     nchan = hdr->nchan / hdr->ds_freq_fact;
     if (hdr->onlyI)
         nivals = nchan;
@@ -321,7 +321,7 @@ int psrfits_write_subint(struct psrfits *pf) {
     if (mode==fold)
         out_nbytes = sub->bytes_per_subint / hdr->ds_freq_fact;
     else {
-        out_nbytes = sub->bytes_per_subint / (hdr->ds_freq_fact * hdr->ds_time_fact);
+        out_nbytes = sub->bytes_per_subint / (hdr->ds_freq_fact * hdr->ds_time_fact) * hdr->nbits/8.0; // Now take care of nbits GD October 20, 2011
         if (hdr->onlyI)
             out_nbytes /= hdr->npol;
     }

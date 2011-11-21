@@ -6,13 +6,26 @@
 #include "dedisperse_gpu.h"
 #include "downsample_gpu.h"
 
+#include "stats_gpu.cu"
+
+#define NBLOCKS 512
+#define NTHREADS 512
+
 /* Returns number of bytes needed for downsampling block */
 size_t get_ds_bytes(const dedispersion_setup *s) {
-    if (s->npol==1) 
+    if (s->nbits==4 && s->npol==1)
+        return sizeof(char)/2 * s->npts_per_block / s->dsfac;
+    if (s->nbits==8 && s->npol==1) 
         return sizeof(char) * s->npts_per_block / s->dsfac;
-    else
+    if (s->nbits==8 && s->npol==1) 
         return sizeof(char4) * s->npts_per_block / s->dsfac;
+    return sizeof(char4) * s->npts_per_block / s->dsfac;
 }
+
+/* Returns number of samples per databuf */
+int get_npts_per_block(const dedispersion_setup *s) {
+    return s->nfft_per_block * (s->fft_len - s->overlap) / s->dsfac;
+}	
 
 /* Initialize the downsampling using values in dedispersion_setup
  * struct.  the s->dsfac field needs to be filled in.
@@ -26,6 +39,16 @@ void init_downsample(dedispersion_setup *s) {
     const size_t ds_bytes = get_ds_bytes(s);
     cudaMalloc((void**)&s->dsbuf_gpu, ds_bytes);
     printf("Downsample memory = %.1f MB\n", ds_bytes / (1024.*1024.));
+
+    if (s->nbits ==4) {
+	cudaMalloc((void**)&s->dstmp32_gpu, get_npts_per_block(s)/NTHREADS*sizeof(float));
+
+	cudaMalloc((void**)&s->dsout32_gpu, NTHREADS*sizeof(float));
+
+	cudaMalloc((void**)&s->mean_gpu, sizeof(float));
+	cudaMalloc((void**)&s->var_gpu,  sizeof(float));
+        printf("4bits Downsample memory = %.1f MB\n", sizeof(float) * (2 + NTHREADS + get_npts_per_block(s)/NTHREADS) / (1024.*1024.));
+    }
 
     // Check for errors
     cudaThreadSynchronize();
@@ -119,6 +142,41 @@ __global__ void detect_downsample_1pol(const float2 *pol0, const float2 *pol1,
 
 }
 
+/* Same as above, except only compute total power and convert to 4 bits data*/
+__global__ void detect_downsample_1pol_32bits(const float2 *pol0, const float2 *pol1,
+        const unsigned dsfac, const unsigned fftlen, const unsigned overlap,
+        float *out) {
+
+    // Dimensions
+    const int tid = threadIdx.x;
+    const int nt = blockDim.x;
+    const int nvalid = fftlen - overlap;
+    const int ifft = blockIdx.x;
+    const int iblock = blockIdx.y;
+    const int nsamp_per_block = nvalid / gridDim.y;
+    const int nout_per_block = nsamp_per_block / dsfac;
+
+    // Data pointers
+    const float2 *ptr0 = pol0 + ifft*fftlen + overlap/2 
+        + iblock*nsamp_per_block;
+    const float2 *ptr1 = pol1 + ifft*fftlen + overlap/2 
+        + iblock*nsamp_per_block;
+    float *optr = out + ifft*nvalid/dsfac + iblock*nout_per_block;
+
+
+    // Loop over data
+    for (int iout=tid; iout<nout_per_block; iout+=nt) {
+        float otmp = 0.0;
+        for (int j=0; j<dsfac; j++) {
+            float2 p0 = ptr0[iout*dsfac+j];
+            float2 p1 = ptr1[iout*dsfac+j];
+            otmp += p0.x*p0.x + p0.y*p0.y + p1.x*p1.x + p1.y*p1.y;
+        }
+        optr[iout] = otmp;
+    }
+
+}
+
 
 /* Detect / downsample data.  Assumes dedispersion results
  * are already in the GPU, as described in the dedispersion_setup
@@ -145,13 +203,35 @@ void downsample(dedispersion_setup *s, char *ds_out) {
 
     /* Downsample data */
     dim3 gd(s->nfft_per_block, 32, 1);
-    if (s->npol==1) 
-        detect_downsample_1pol<<<gd, 64>>>(s->databuf0_gpu, s->databuf1_gpu,
-                s->dsfac, s->fft_len, s->overlap, (char *)s->dsbuf_gpu);
-    else
-        detect_downsample_4pol<<<gd, 64>>>(s->databuf0_gpu, s->databuf1_gpu,
-                s->dsfac, s->fft_len, s->overlap, (char4 *)s->dsbuf_gpu);
+    if (s->nbits==4 && s->npol==1)
+        detect_downsample_1pol_32bits<<<gd, 64>>>(s->databuf0_gpu, s->databuf1_gpu, s->dsfac, s->fft_len, s->overlap, (float *)s->dstmp32_gpu);
+        
+    if (s->nbits==8 && s->npol==1) 
+        detect_downsample_1pol<<<gd, 64>>>(s->databuf0_gpu, s->databuf1_gpu, s->dsfac, s->fft_len, s->overlap, (char *)s->dsbuf_gpu);
+    else if (s->nbits==8 && s->npol==4)
+        detect_downsample_4pol<<<gd, 64>>>(s->databuf0_gpu, s->databuf1_gpu, s->dsfac, s->fft_len, s->overlap, (char4 *)s->dsbuf_gpu);
     cudaEventRecord(t[it], 0); it++;
+
+    if (s->nbits==4) {
+
+        const unsigned nthreads = NTHREADS; const unsigned nblocks = NBLOCKS;
+        const unsigned N = s->npts_per_block / s->dsfac;
+	const unsigned zero = 0;
+
+        reduce<NTHREADS, float><<<nblocks, nthreads>>> (s->dstmp32_gpu, s->dsout32_gpu, N, zero);
+	reduce<1, float><<<1, nblocks>>> (s->dsout32_gpu, s->mean_gpu, nblocks, N);
+
+	variance<NTHREADS, float><<<nblocks, nthreads>>> (s->dstmp32_gpu, s->dsout32_gpu, s->mean_gpu, N);
+	reduce<1, float><<<1, nblocks>>> (s->dsout32_gpu, s->var_gpu, nblocks, zero);
+
+	/* 2nd pass */
+        //reduce_pass2<NTHREADS><<<nblocks, nthreads>>> (s->dstmp32_gpu, s->dsout32_gpu, s->mean_gpu, s->var_gpu, N);
+	//reduce<1, float><<<1, nblocks>>> (s->dsout32_gpu, s->mean_gpu, nblocks, zero);
+
+	/* Remove baseline and scale to 4 bits */
+	remove_baseline_scale<<<nblocks, nthreads>>>(s->dstmp32_gpu, s->dsbuf_gpu, s->mean_gpu, s->var_gpu, s->nbits, N); 
+
+    }
 
     /* Transfer data back to CPU */
     cudaMemcpy(ds_out, s->dsbuf_gpu, ds_bytes, cudaMemcpyDeviceToHost);

@@ -52,6 +52,7 @@ typedef struct {
     // Info for downsampling
     int dsfac;            // Downsample factor
     int npol;             // Number of polarizations to save (4 or 1)
+    int nbits;		  // Number of bits to write the data (4 or 8)
 
     // Memory blocks, etc on the host and/or GPU
     unsigned char *tbuf_host;     // host memory for data transfer
@@ -69,7 +70,11 @@ typedef struct {
     unsigned *foldbuf_c_gpu;      // Final folded data (counts)
 
     // Memory for downsampling
-    char *dsbuf_gpu;              // 8-bit downsampled data
+    char *dsbuf_gpu;              // downsampled data (8-bit or 4-bit data)
+    float *dstmp32_gpu;           // 32-bit downsampled data
+    float *dsout32_gpu;           // 32-bit reduced downsampled data
+    float *mean_gpu;              // mean of the data
+    float *var_gpu;               // variance of the data
 
     // GPU control stuff
     cufftHandle plan;           // CUFFT plan
@@ -89,6 +94,7 @@ void init_dedispersion(dedispersion_setup *s);
 void dedisperse(dedispersion_setup *s, int ichan, const unsigned char *in, float *out);
 void free_dedispersion(dedispersion_setup *s);
 void print_timing_report(dedispersion_setup *s);
+void unpack(dedispersion_setup *s, int ichan, const unsigned char *in, float *out);
 #ifdef __cplusplus
 }
 #endif
