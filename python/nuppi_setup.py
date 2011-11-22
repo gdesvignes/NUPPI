@@ -96,7 +96,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
     else:
         b.update("OBS_MODE", 'PSR')
 
-    databuf_mb = 128 		# Databuf in Mb 
+    databuf_mb = 256 		# Databuf in Mb 
 
     # Params for coherent
     if b['OBS_MODE']=='PSR':
