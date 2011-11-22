@@ -111,30 +111,11 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	    except:
 	        b.update("DM", 0.001)
 
-	lofreq_ghz = (b['OBSFREQ']-abs(b['OBSBW']/2.0))/1.0e3
-	round_fac = 8192 
-	overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM'] 
-	overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
-
-        # Rough optimization for fftlen
-	fftlen = 16*1024
-	if overlap_r<=1024: fftlen=32*1024
-        elif overlap_r<=2048: fftlen=64*1024
-        elif overlap_r<=16*1024: fftlen=128*1024
-        elif overlap_r<=64*1024: fftlen=256*1024
-        while fftlen<2*overlap_r: fftlen *= 2
-
-	# Force FFT len
-	fftlen = 256*1024  # If we want 1M FFT, increase databuf size !
-	npts_max_per_chan = databuf_mb*1024*1024/4/b['OBSNCHAN']
-	nfft = (npts_max_per_chan - overlap_r)/(fftlen - overlap_r)
-	npts = nfft*(fftlen-overlap_r) + overlap_r
-	blocsize = npts*b['OBSNCHAN']*4
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)
 	b.update("BLOCSIZE", blocsize)
-
 
 
     # Params for search Mode
@@ -156,17 +137,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	else:
 	    b.update("ONLY_I", 0)
 
-
-	lofreq_ghz = (b['OBSFREQ']-abs(b['OBSBW']/2.0))/1.0e3
-	round_fac = 8192 
-	overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM'] 
-	overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
-
-	fftlen = 128*1024  # If we want 1M FFT, increase databuf size !
-	npts_max_per_chan = databuf_mb*1024*1024/4/b['OBSNCHAN']
-	nfft = (npts_max_per_chan - overlap_r)/(fftlen - overlap_r)
-	npts = nfft*(fftlen-overlap_r) + overlap_r
-	blocsize = npts*b['OBSNCHAN']*4
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)
@@ -176,16 +147,9 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 
     # Params for calibration Mode
     if b['OBS_MODE']=='CAL':
-	lofreq_ghz = (b['OBSFREQ']-abs(b['OBSBW']/2.0))/1.0e3
-	round_fac = 8192 
-	overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM'] 
-	overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
-
-	fftlen = 256*1024  # If we want 1M FFT, increase databuf size !
-	npts_max_per_chan = databuf_mb*1024*1024/4/b['OBSNCHAN']
-	nfft = (npts_max_per_chan - overlap_r)/(fftlen - overlap_r)
-	npts = nfft*(fftlen-overlap_r) + overlap_r
-	blocsize = npts*b['OBSNCHAN']*4
+        
+	b.update("DM", 0.001)
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)

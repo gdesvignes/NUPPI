@@ -23,6 +23,32 @@ def logfile(process):
     l.basicConfig(level=l.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s : %(message)s", filename=LOG_FILENAME, )
     return l.getLogger(process)
 
+def get_dedisp_params(obs_freq, obs_bw, chan_bw, dm):
+    """
+    """
+    lofreq_ghz = (obs_freq-abs(obs_bw/2.0))/1.0e3
+    round_fac = 8192
+    overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM']
+    overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
+
+    # Rough optimization for fftlen
+    fftlen = 16*1024
+    if overlap_r<=1024: fftlen=32*1024
+    elif overlap_r<=2048: fftlen=64*1024
+    elif overlap_r<=16*1024: fftlen=128*1024
+    elif overlap_r<=64*1024: fftlen=256*1024
+    while fftlen<2*overlap_r: fftlen *= 2
+
+    # Force FFT len
+    if fftlen < 256*1024:
+        fftlen = 256*1024  # If we want 1M FFT, increase databuf size !
+    npts_max_per_chan = databuf_mb*1024*1024/4/b['OBSNCHAN']
+    nfft = (npts_max_per_chan - overlap_r)/(fftlen - overlap_r)
+    npts = nfft*(fftlen-overlap_r) + overlap_r
+    blocsize = npts*b['OBSNCHAN']*4
+
+    return fftlen, nfft, overlap_r, npts, blocsize
+
 def dm_from_parfile(parfile):
     """
     dm_from_parfile(parfile):
