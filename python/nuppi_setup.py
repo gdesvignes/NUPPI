@@ -146,12 +146,16 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	    # For standard suvey mode, use only 4 bits psrfits
 	    b.update("NBITS", 4)
 	else:
-	    b.update("NBITS", 8)
-	    b.update("PARFILE","%s/%s.par"%(PAR_DIRECTORY,b['SRC_NAME']))
-	    try:
-		b.update("DM", dm_from_parfile(b['PARFILE']))
-	    except:
-	        b.update("DM", 0.001)
+	    # No DM on command line
+	    if b['DM'] < 0.1:
+		b.update("NBITS", 8)
+		b.update("PARFILE","%s/%s.par"%(PAR_DIRECTORY,b['SRC_NAME']))
+		try:
+		    b.update("DM", dm_from_parfile(b['PARFILE']))
+		except:
+		    b.update("DM", 0.001)
+	    else: 	    
+		b.update("NBITS", 8)
 
 	# Record either Total intensity or full pol
 	if opt.onlyI:
@@ -165,7 +169,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM'] 
 	overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
 
-	fftlen = 128*1024  # If we want 1M FFT, increase databuf size !
+	fftlen = 256*1024  # If we want 1M FFT, increase databuf size !
 	npts_max_per_chan = databuf_mb*1024*1024/4/b['OBSNCHAN']
 	nfft = (npts_max_per_chan - overlap_r)/(fftlen - overlap_r)
 	npts = nfft*(fftlen-overlap_r) + overlap_r
