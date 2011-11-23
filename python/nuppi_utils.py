@@ -23,10 +23,13 @@ def logfile(process):
     l.basicConfig(level=l.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s : %(message)s", filename=LOG_FILENAME, )
     return l.getLogger(process)
 
-def get_dedisp_params(status):
+def get_dedisp_params(b, databuf_mb):
     """
+    get_dedisp_params(b, databuf_mb):
+      Given the Status shm and the size of databuf shm, 
+        returns the dedispersion parameters
     """
-    lofreq_ghz = (obs_freq-abs(obs_bw/2.0))/1.0e3
+    lofreq_ghz = (b['OBSFREQ']-abs(b['OBSBW']/2.0))/1.0e3
     round_fac = 8192
     overlap_samp = 8.3 * b['CHAN_BW']**2 / lofreq_ghz**3 * b['DM']
     overlap_r = round_fac * (int(overlap_samp)/round_fac + 1)
