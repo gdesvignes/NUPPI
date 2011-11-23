@@ -23,7 +23,7 @@ def logfile(process):
     l.basicConfig(level=l.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s : %(message)s", filename=LOG_FILENAME, )
     return l.getLogger(process)
 
-def get_dedisp_params(obs_freq, obs_bw, chan_bw, dm):
+def get_dedisp_params(status):
     """
     """
     lofreq_ghz = (obs_freq-abs(obs_bw/2.0))/1.0e3
