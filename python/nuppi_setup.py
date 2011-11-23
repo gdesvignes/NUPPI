@@ -380,6 +380,9 @@ add_param_option("--bw",
 add_param_option("--nchan", 
         name="TOTNCHAN", type="int",
         help="Number of hardware channels")
+add_param_option("--nsubchan", 
+        name="NSUBCHAN", type="int",
+        help="Number of sub-channels to produce with the GPU filterbank")
 add_param_option("--npol", 
         name="NPOL", type="int",
         help="Number of hardware polarizations")

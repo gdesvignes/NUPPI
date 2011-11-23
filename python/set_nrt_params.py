@@ -22,6 +22,7 @@ def set_nrt_params(b, gpu_id):
     b.update("DM", 0.001)
     b.update("CHAN_DM", 0.001)
     b.update("TOTNCHAN", 128)
+    b.update("NSUBCHAN", 1)	# Number of subchannels to produce with filterbank
     b.update("N_DS", 4)
     b.update("N_GPU", 2)
     b.update("NBIN", 2048)
