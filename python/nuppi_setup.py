@@ -96,7 +96,8 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
     else:
         b.update("OBS_MODE", 'PSR')
 
-    databuf_mb = 256 		# Databuf in Mb 
+    # Set the databuf size in Mb
+    databuf_mb = 256 
 
     # Params for coherent
     if b['OBS_MODE']=='PSR':
@@ -111,7 +112,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	    except:
 	        b.update("DM", 0.001)
 
-	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b, databuf_mb)
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)
@@ -137,7 +138,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
 	else:
 	    b.update("ONLY_I", 0)
 
-	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b, databuf_mb)
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)
@@ -149,7 +150,7 @@ def fill_status_shm(opt, log, b, update_list, gpu_id):
     if b['OBS_MODE']=='CAL':
         
 	b.update("DM", 0.001)
-	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b['OBSFREQ'], b['OBSBW'], b['CHAN_BW'], b['DM'])
+	fftlen, nfft, overlap_r, npts, blocsize = get_dedisp_params(b, databuf_mb)
 
 	b.update("FFTLEN", fftlen)
 	b.update("OVERLAP", overlap_r)
