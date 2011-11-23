@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     // -- Create or just attach to net shared mem --
     dbuf_net = databuf_attach(net_args.output_buffer);
     if (dbuf_net==NULL) 
-        dbuf_net = databuf_create(8, 128*1024*1024, net_args.output_buffer);
+        dbuf_net = databuf_create(8, 256*1024*1024, net_args.output_buffer);
     if (dbuf_net==NULL) {	
         log_error("nuppi_daq_dedisp", "Error connecting to databuf net shm");
         exit(1);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     // -- Create or just attach to fold shared mem --
     dbuf_fold = databuf_attach(dedisp_args.output_buffer);
     if (dbuf_fold==NULL)
-        dbuf_fold = databuf_create(8, 32*1024*1024, dedisp_args.output_buffer);
+        dbuf_fold = databuf_create(8, 128*1024*1024, dedisp_args.output_buffer);
     if (dbuf_fold==NULL) {
         log_error("nuppi_daq_dedisp", "Error connecting to databuf fold shm");
         exit(1);
@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
         // -- Create or just attach to net shared mem --
 	dbuf_net_2 = databuf_attach(net_args_2.output_buffer);
 	if (dbuf_net_2==NULL) 
-	    dbuf_net_2 = databuf_create(8, 128*1024*1024, net_args_2.output_buffer);
+	    dbuf_net_2 = databuf_create(8, 256*1024*1024, net_args_2.output_buffer);
 	if (dbuf_net_2==NULL) {	
 	    log_error("nuppi_daq_dedisp", "Error connecting to databuf net shm for GPU #2");
 	    exit(1);
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 	// -- Create or just attach to fold shared mem --
 	dbuf_fold_2 = databuf_attach(dedisp_args_2.output_buffer);
 	if (dbuf_fold_2==NULL)
-	    dbuf_fold_2 = databuf_create(8, 32*1024*1024, dedisp_args_2.output_buffer);
+	    dbuf_fold_2 = databuf_create(8, 128*1024*1024, dedisp_args_2.output_buffer);
 	if (dbuf_fold_2==NULL) {
 	    log_error("nuppi_daq_dedisp", "Error connecting to databuf fold shm for GPU #2");
 	    exit(1);
